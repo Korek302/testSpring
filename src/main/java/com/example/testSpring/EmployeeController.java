@@ -1,11 +1,10 @@
 package com.example.testSpring;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,23 +12,43 @@ import java.util.List;
 public class EmployeeController
 {
     @Autowired
-    private Repository repository;
+    Repository repository;
 
-    @RequestMapping(value = "entities", method = RequestMethod.GET)
-    public List<Employee> list()
+    @GetMapping("/employees")
+    public List<Employee> getAllEmployees()
     {
         return repository.findAll();
     }
 
-    @RequestMapping("getEmployees")
-    public List<Employee> getEmployees()
+    @PostMapping("/employees")
+    public Employee createEmployee(@Valid @RequestBody Employee employee)
     {
-        List<Employee> result = new ArrayList<>();
+        return repository.save(employee);
+    }
 
-        result.add(new Employee("Jan", "Nowak", new BigDecimal("345.34")));
-        result.add(new Employee("Maciek", "Kowalski", new BigDecimal("8949.688")));
-        result.add(new Employee("Karol", "Kwiatkowski", new BigDecimal("6440.31")));
+    @GetMapping("/employees/{id}")
+    public Employee getEmployeeById(@PathVariable(value = "id") Integer employeeId)
+    {
+        return repository.findById(employeeId).get();
+    }
 
-        return result;
+    @PutMapping("/employees/{id}")
+    public Employee updateEmployee(@PathVariable(value="id") Integer employeeId, @Valid @RequestBody Employee employeeDetails)
+    {
+        Employee employee = repository.findById(employeeId).get();
+        employee.setFirstName(employeeDetails.getFirstName());
+        employee.setLastName(employeeDetails.getLastName());
+        employee.setSalary(employeeDetails.getSalary());
+
+        Employee updatedEmployee = repository.save(employee);
+        return updatedEmployee;
+    }
+
+    @DeleteMapping("/employees/{id}")
+    public ResponseEntity<?> deleteEmployee(@PathVariable(value="id") Integer employeeId)
+    {
+        Employee employee = repository.findById(employeeId).get();
+        repository.delete(employee);
+        return ResponseEntity.ok().build();
     }
 }
